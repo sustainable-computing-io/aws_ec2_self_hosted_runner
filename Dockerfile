@@ -1,6 +1,9 @@
 # Set the base image to use for subsequent instructions
 FROM alpine:3.18
 
+# hadolint ignore=DL3018
+RUN apk add --no-cache aws-cli bash curl jq
+
 # Set the working directory inside the container
 WORKDIR /usr/src
 
