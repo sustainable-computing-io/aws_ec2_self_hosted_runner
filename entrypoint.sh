@@ -207,7 +207,9 @@ create_runner () {
 
         # Check if instance creation failed
         if [ -z "$INSTANCE_ID" ]; then
-            debug "Failed to create instance with bid price ${BID_PRICE}"
+            echo "Failed to create instance with bid price ${BID_PRICE}"
+            # get the latest bid price and increase the bid price by 10%
+            get_bid_price
             BID_PRICE=$(echo "$BID_PRICE * 1.1" | bc)
             debug "Creating a spot instance with a new bid of ${BID_PRICE}"
             continue
