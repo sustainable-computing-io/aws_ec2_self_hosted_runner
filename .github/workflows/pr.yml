@@ -1,7 +1,6 @@
 name: PR Test
 
 on:
-  pull_request:
   push:
     branches:
       - main
@@ -11,6 +10,7 @@ permissions:
 
 env:
     TEST_TAG: localhost:5001/sustainable_computing_io/aws_ec2_self_hosted_runner:latest
+
 jobs:
   setup-runner:
     name: Docker Tests
@@ -60,7 +60,7 @@ jobs:
             --env AMI_ID=ami-0e4d0bb9670ea8db0 \
             --env INSTANCE_TYPE=t2.micro \
             --env CREATE_S3_BUCKET=false \
-            --env SPOT_INSTANCE_ONLY=false \
+            --env SPOT_INSTANCE_ONLY=true \
             --rm ${{ env.TEST_TAG }} >> $GITHUB_OUTPUT
 
       - name: Print Output
@@ -136,3 +136,20 @@ jobs:
             --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             --env INSTANCE_ID=${{ needs.setup-runner.outputs.instance_id }} \
             --rm ${{ env.TEST_TAG }}
+
+      - name: Login to Quay
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io/sustainable_computing_io
+          username: ${{ secrets.BOT_NAME }}
+          password: ${{ secrets.BOT_TOKEN }}
+      
+      - name: Build and push the container
+        uses: docker/build-push-action@v5
+        with:
+            context: .
+            platforms: linux/amd64
+            push: true
+            tags: quay.io/sustainable_computing_io/aws_ec2_self_hosted_runner:latest
+            labels: latest
+            file: Dockerfile

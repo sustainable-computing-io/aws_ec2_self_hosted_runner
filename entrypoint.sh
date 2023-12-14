@@ -195,8 +195,8 @@ create_runner () {
     get_bid_price
     # Creating a spot instance request
     debug "Creating a spot instance with an initial bid of ${BID_PRICE}"
-    # try 2 times, each time increase the bid price by 10%
-    for i in {1..2}
+    # try 3 times, each time increase the bid price by 10%
+    for i in {1..3}
     do
         run_spot_instance
         # Extract instance ID
