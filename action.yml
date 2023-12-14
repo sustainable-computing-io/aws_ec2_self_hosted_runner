@@ -2,20 +2,27 @@ name: AWS EC2 Self Hosted Runner
 description: Create a self hosted runner on AWS EC2
 author: Kepler Authors
 
-# Define your inputs here.
-inputs:
-  who-to-greet:
-    description: Who to greet
-    required: false
-    default: World
-
 # Define your outputs here.
 outputs:
-  time:
-    description: The time we greeted you
+  instane_id:
+    description: The AWS EC2 instance id
+  runner_name:
+    description: The name of the self hosted runner
+  bucket_name:
+    description: The name of the S3 bucket (if created)
 
 runs:
   using: docker
   image: Dockerfile
   env:
-    INPUT_WHO_TO_GREET: ${{ inputs.who-to-greet }}
+    ACTION="create|unregister|terminate" 
+    AWS_REGION: ${{ secrets.AWS_REGION }}
+    GITHUB_TOKEN: ${{ secrets.GH_SELF_HOSTED_RUNNER_TOKEN }}
+    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    SECURITY_GROUP_ID: ${{ secrets.AWS_SECURITY_GROUP_ID }}
+    GITHUB_REPO: ${{ github.repository }}
+    AMI_ID: ami-0e4d0bb9670ea8db0
+    INSTANCE_TYPE: t2.micro
+    CREATE_S3_BUCKET: false
+    SPOT_INSTANCE_ONLY: true
