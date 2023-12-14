@@ -1,4 +1,6 @@
-name: PR Test
+# shellcheck disable=SC1000-SC9999
+
+name: Test and Deploy
 
 on:
   push:

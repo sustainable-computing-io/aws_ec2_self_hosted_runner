@@ -50,7 +50,9 @@ runs:
     AMI_ID: ${{ github.event.inputs.ami_id }}
     # if defined in the workflow, this will be the instance type to use
     INSTANCE_TYPE: ${{ github.event.inputs.instance_type }}
-    # if defined in the workflow, this will be a bool whether to create an s3 bucket
+    # if defined in the workflow
+    # this will be a bool whether to create an s3 bucket
     CREATE_S3_BUCKET: ${{ github.event.inputs.create_s3_bucket }}
-    # if defined in the workflow, this will be a bool whether to use spot instances only
+    # if defined in the workflow
+    # this will be a bool whether to use spot instances only
     SPOT_INSTANCE_ONLY: ${{ github.event.inputs.spot_instance_only }}
