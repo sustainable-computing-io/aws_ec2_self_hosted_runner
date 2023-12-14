@@ -59,11 +59,11 @@ jobs:
             --env AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
             --env SECURITY_GROUP_ID="${{ secrets.AWS_SECURITY_GROUP_ID }}" \
             --env GITHUB_REPO="${{ github.repository }}" \
-            --env AMI_ID=ami-0e4d0bb9670ea8db0 \
-            --env INSTANCE_TYPE=t2.micro \
-            --env CREATE_S3_BUCKET=false \
-            --env SPOT_INSTANCE_ONLY=true \
-            --rm ${{ env.TEST_TAG }} >> $GITHUB_OUTPUT
+            --env AMI_ID="ami-0e4d0bb9670ea8db0" \
+            --env INSTANCE_TYPE="t2.micro" \
+            --env CREATE_S3_BUCKET="false" \
+            --env SPOT_INSTANCE_ONLY="true" \
+            --rm ${{ env.TEST_TAG }} >> "$GITHUB_OUTPUT"
 
       - name: Print Output
         id: output
@@ -84,8 +84,8 @@ jobs:
 
       - name: Run Tests
         run: |
-          export INSTANCE_ID=${{ needs.setup-runner.outputs.instance_id }}
-          echo "Running tests on self-hosted runner with instance $INSTANCE_ID"
+          export INSTANCE_ID="${{ needs.setup-runner.outputs.instance_id }}"
+          echo "Running tests on self-hosted runner with instance ${INSTANCE_ID}"
           uname -a # or any other command
   
   destroy-runner:
