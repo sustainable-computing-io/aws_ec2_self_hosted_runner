@@ -123,9 +123,9 @@ jobs:
         run: |
           docker run \
             --env ACTION="unregister" \
-            --env RUNNER_NAME=${{ needs.setup-runner.outputs.runner_name }} \
-            --env GITHUB_TOKEN=${{ secrets.GH_SELF_HOSTED_RUNNER_TOKEN }} \
-            --env GITHUB_REPO=${{ github.repository }} \
+            --env RUNNER_NAME="${{ needs.setup-runner.outputs.runner_name }}" \
+            --env GITHUB_TOKEN="${{ secrets.GH_SELF_HOSTED_RUNNER_TOKEN }}" \
+            --env GITHUB_REPO="${{ github.repository }}" \
             --rm ${{ env.TEST_TAG }}
 
       - name: Test terminate action
@@ -133,10 +133,10 @@ jobs:
         run: |
           docker run \
             --env ACTION="terminate" \
-            --env AWS_REGION=${{ secrets.AWS_REGION }} \
-            --env AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-            --env INSTANCE_ID=${{ needs.setup-runner.outputs.instance_id }} \
+            --env AWS_REGION="${{ secrets.AWS_REGION }}" \
+            --env AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+            --env AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+            --env INSTANCE_ID="${{ needs.setup-runner.outputs.instance_id }}" \
             --rm ${{ env.TEST_TAG }}
 
       - name: Login to Quay
