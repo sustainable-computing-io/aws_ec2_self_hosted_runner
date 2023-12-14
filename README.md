@@ -107,4 +107,3 @@ jobs:
 | `runner_name` | GitHub self hosted runner name |
 | `instance_ip` | AWS EC2 instance IP |
 | `bucket_name` | AWS S3 bucket name |
-
