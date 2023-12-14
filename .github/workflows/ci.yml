@@ -22,7 +22,7 @@ jobs:
           - 5001:5000
 
     env:
-      TEST_TAG: localhost:5001/actions/hello-world-docer-action:latest
+      TEST_TAG: localhost:5001/sustainable_computing_io/aws_ec2_self_hosted_runner:latest
 
     steps:
       - name: Checkout

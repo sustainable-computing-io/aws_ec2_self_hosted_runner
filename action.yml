@@ -1,12 +1,12 @@
-name: Hello, World!
-description: Greet someone and record the time
-author: GitHub Actions
+name: AWS EC2 Self Hosted Runner
+description: Create a self hosted runner on AWS EC2
+author: Kepler Authors
 
 # Define your inputs here.
 inputs:
   who-to-greet:
     description: Who to greet
-    required: true
+    required: false
     default: World
 
 # Define your outputs here.

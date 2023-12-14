@@ -34,10 +34,9 @@ GITHUB_TOKEN="${GITHUB_TOKEN:-YOUR_TOKEN}"
 GITHUB_REPO="${GITHUB_REPO:-"sustainable-computing-io/kepler-model-server"}"
 REGION="${REGION:-us-east-2}"          # Region to launch the spot instance
 DEBUG="${DEBUG:-false}"                # Enable debug mode
-KEY_NAME="${KEY_NAME:-YOUR_KEY_NAME}"  # Name of the key pair to use for the instance
-GITHUB_OUTPUT="${GITHUB_OUTPUT:-github_output.txt}" # Name of the file to output the instance ID to
-ROOT_VOLUME_SIZE="${ROOT_VOLUME_SIZE:-200}" # Size of the root volume in GB
-SPOT_INASTANCE_ONLY="${SPOT_INASTANCE_ONLY:-true}" # If true, only create spot instance
+KEY_NAME="${KEY_NAME:-}"  # Name of the key pair to use for the instance
+ROOT_VOLUME_SIZE="${ROOT_VOLUME_SIZE:-8}" # Size of the root volume in GB
+SPOT_INSTANCE_ONLY="${SPOT_INSTANCE_ONLY:-true}" # If true, only create spot instance
 CREATE_S3_BUCKET="${CREATE_S3_BUCKET:-false}" # Wehther to create a S3 bucket to store the model
 BUCKET_NAME="${BUCKET_NAME:-}"         # Name of the S3 bucket
 INSTANCE_ID="${INSTANCE_ID:-}"         # ID of the created instance
@@ -48,12 +47,6 @@ KEY_NAME_OPT=""                        # Option to pass to the AWS CLI to specif
 ORG_NAME=$(echo "$GITHUB_REPO" | cut -d'/' -f1)
 # get the repo name from the github repo
 REPO_NAME=$(echo "$GITHUB_REPO" | cut -d'/' -f2)
-# github runner name
-RUNNER_NAME="self-hosted-runner-"$(date +"%Y%m%d%H%M%S")
-# set s3 bucket name if not set and create s3 bucket flag is set to true
-if [ -z "$BUCKET_NAME" ] && [ "$CREATE_S3_BUCKET" == "true" ]; then
-    BUCKET_NAME=$REPO_NAME"-"$INSTANCE_TYPE"-"$(date +"%Y%m%d%H%M%S")
-fi
 
 debug() {
     [ "$DEBUG" == "true" ] &&  echo "DEBUG: $*" 1>&2
@@ -70,7 +63,7 @@ fi
 get_github_runner_token () {
     # fail if github token is not set
     if [ -z "$GITHUB_TOKEN" ]; then
-        echo "GITHUB_TOKEN is not set"
+        debug "GITHUB_TOKEN is not set"
         exit 1
     fi
 
@@ -86,7 +79,7 @@ get_github_runner_token () {
     debug "runner token: " "$RUNNER_TOKEN"
     # fail if then length of runner token is less than 5
     if [ ${#RUNNER_TOKEN} -lt 5 ]; then
-        echo "Failed to get runner token"
+        debug "Failed to get runner token"
         exit 1
     fi
 }
@@ -94,8 +87,17 @@ get_github_runner_token () {
 prep () {
     # fail if security group id is not set
     if [ -z "$SECURITY_GROUP_ID" ]; then
-        echo "SECURITY_GROUP_ID is not set"
+        debug "SECURITY_GROUP_ID is not set"
         exit 1
+    fi
+
+    # github runner name
+    if [ -z "$RUNNER_NAME" ]; then
+        RUNNER_NAME="self-hosted-runner-"$(date +"%Y%m%d%H%M%S")
+    fi
+    # set s3 bucket name if not set and create s3 bucket flag is set to true
+    if [ -z "$BUCKET_NAME" ] && [ "$CREATE_S3_BUCKET" == "true" ]; then
+        BUCKET_NAME=$REPO_NAME"-"$INSTANCE_TYPE"-"$(date +"%Y%m%d%H%M%S")
     fi
 
     get_github_runner_token
@@ -202,9 +204,7 @@ create_runner () {
 
         # Check if instance creation failed
         if [ -z "$INSTANCE_ID" ]; then
-            echo "Failed to create instance with bid price ${BID_PRICE}"
-            # get the latest bid price and increase the bid price by 10%
-            get_bid_price
+            debug "Failed to create instance with bid price ${BID_PRICE}"
             BID_PRICE=$(echo "$BID_PRICE * 1.1" | bc)
             debug "Creating a spot instance with a new bid of ${BID_PRICE}"
             continue
@@ -216,11 +216,11 @@ create_runner () {
     # if instance id is still empty, then we failed to create a spot instance
     # create on-demand instance instead
     if [ -z "$INSTANCE_ID" ]; then
-        echo "Failed to create spot instance, creating on-demand instance instead"
-        if [ "$SPOT_INASTANCE_ONLY" == "true" ]; then
-            echo "SPOT_INASTANCE_ONLY is set to true, exiting"
+        if [ "$SPOT_INSTANCE_ONLY" == "true" ]; then
+            debug "SPOT_INSTANCE_ONLY is set to true, exiting"
             exit 1
         fi
+        debug "Failed to create spot instance, creating on-demand instance instead"
         run_on_demand_instance
 
         # Extract instance ID
@@ -228,7 +228,7 @@ create_runner () {
 
         # Check if instance creation failed
         if [ -z "$INSTANCE_ID" ]; then
-            echo "Failed to create on-demand instance"
+            debug "Failed to create on-demand instance"
             exit 1
         fi
     fi
@@ -238,7 +238,7 @@ create_runner () {
 
     # Check if wait command succeeded
     if [ $? -ne 0 ]; then
-        echo "Instance failed to become ready. Terminating instance."
+        debug "Instance failed to become ready. Terminating instance."
         terminate_instance
         exit 1
     fi
@@ -247,10 +247,10 @@ create_runner () {
     get_instance_ip
 
     # Output the instance ID to github output
-    echo "instance_id=$INSTANCE_ID" >> "$GITHUB_OUTPUT"
-    echo "runner_name=$RUNNER_NAME" >> "$GITHUB_OUTPUT"
-    echo "instance_ip=$INSTANCE_IP" >> "$GITHUB_OUTPUT"
-    echo "bucket_name=$BUCKET_NAME" >> "$GITHUB_OUTPUT"
+    echo "instance_id=$INSTANCE_ID"
+    echo "runner_name=$RUNNER_NAME"
+    echo "instance_ip=$INSTANCE_IP"
+    echo "bucket_name=$BUCKET_NAME"
 }
 
 list_runner () {
@@ -270,37 +270,39 @@ unregister_runner () {
         -H "Accept: application/vnd.github.v3+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         "https://api.github.com/repos/${ORG_NAME}/${REPO_NAME}/actions/runners")
-    ID=$(echo "$RUNNERS" | jq -r '.runners[] | select(.name=="'$RUNNER_NAME'") | .id ')
+    RUNNER_ID=$(echo "$RUNNERS" | jq -r '.runners[] | select(.name=="'$RUNNER_NAME'") | .id ')
+    debug "runner id: " "$RUNNER_ID"
     curl -L -X DELETE -H "Authorization: Bearer ${GITHUB_TOKEN}" \
         -H "Accept: application/vnd.github.v3+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        "https://api.github.com/repos/${ORG_NAME}/${REPO_NAME}/actions/runners/${ID}"
+        "https://api.github.com/repos/${ORG_NAME}/${REPO_NAME}/actions/runners/${RUNNER_ID}"
 }
 
 # Get ACTION from env var passed by workflow. 
 # If not set, use the command line arguments and run the matching function. This is for local testing.
 ACTION=${ACTION:-$1}
 if [ -z "$ACTION" ]; then
-    echo "ACTION is not set"
+    debug "ACTION is not set"
     exit 1
 fi
 
 case $ACTION in
     create)
         INSTANCE_ID=""
+        RUNNER_NAME=""
         prep
         create_runner
         ;;
     terminate)
         if [ -z "${INSTANCE_ID}" ]; then
-            echo "Instance ID is not set"
+            debug "Instance ID is not set"
             exit 1
         fi
         terminate_instance
         ;;
     unregister)
         if [ -z "${RUNNER_NAME}" ]; then
-            echo "Runner name is not set"
+            debug "Runner name is not set"
             exit 1
         fi
         unregister_runner
@@ -309,7 +311,7 @@ case $ACTION in
         list_runner 
         ;;
     *)
-        echo "Invalid action:"${ACTION}
-        echo "Usage: $0 {create|terminate|unregister|list}"
+        debug "Invalid action:"${ACTION}
+        debug "Usage: $0 {create|terminate|unregister|list}"
         exit 1
 esac
