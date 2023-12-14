@@ -29,8 +29,8 @@ set -o pipefail
 # Define instance parameters
 AMI_ID="${AMI_ID:-ami-0e4d0bb9670ea8db0}" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type, x86_64
 INSTANCE_TYPE="${INSTANCE_TYPE:-t2.micro}" # c6i.metal: c is for compute, 6 is 6th geneneration, i is for Intel, metal is for bare metal
-SECURITY_GROUP_ID="${SECURITY_GROUP_ID:-YOUR_SECURITY_GROUP_ID}"
-GITHUB_TOKEN="${GITHUB_TOKEN:-YOUR_TOKEN}"
+SECURITY_GROUP_ID="${SECURITY_GROUP_ID:-}"
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 GITHUB_REPO="${GITHUB_REPO:-"sustainable-computing-io/kepler-model-server"}"
 REGION="${REGION:-us-east-2}"          # Region to launch the spot instance
 DEBUG="${DEBUG:-false}"                # Enable debug mode
