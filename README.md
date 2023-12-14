@@ -124,9 +124,6 @@ need to perform some initial setup steps before you can test your action.
 
 1. :hammer_and_wrench: Build the container
 
-   Make sure to replace `sustainable_computing_io/aws_ec2_self_hosted_runner` with an appropriate
-   label for your container.
-
    ```bash
    docker build -t sustainable_computing_io/aws_ec2_self_hosted_runner .
    ```

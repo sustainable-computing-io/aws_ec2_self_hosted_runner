@@ -15,12 +15,18 @@ runs:
   using: docker
   image: Dockerfile
   env:
-    ACTION="create|unregister|terminate" 
+    # ACTION is one of create, unregister, terminate
+    ACTION: "create|unregister|terminate" 
+    # aws region to use, this could be an input parameter or a secret
     AWS_REGION: ${{ secrets.AWS_REGION }}
+    # github token to use, this should be a secret
     GITHUB_TOKEN: ${{ secrets.GH_SELF_HOSTED_RUNNER_TOKEN }}
+    # aws access key id and secret access key, these should be secrets
     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    # AWS security group id, this could be an input parameter or a secret
     SECURITY_GROUP_ID: ${{ secrets.AWS_SECURITY_GROUP_ID }}
+    # github repository to use, this could be an input parameter or a secret
     GITHUB_REPO: ${{ github.repository }}
     AMI_ID: ami-0e4d0bb9670ea8db0
     INSTANCE_TYPE: t2.micro
