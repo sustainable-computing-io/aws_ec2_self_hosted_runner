@@ -95,7 +95,7 @@ jobs:
 | GITHUB_TOKEN         | The GitHub token to authenticate with the GitHub API. Must have repository admin permission.          | Replace "YOUR_TOKEN" with the actual GitHub token. |
 | GITHUB_REPO          | The GitHub repository in the format "owner/repository" to clone and use.                              | "sustainable-computing-io/kepler-model-server" |
 | REGION               | The AWS region to launch the spot instance.                                                           | "us-east-2"                              |
-| DEBUG                | Enable or disable debug mode.  *** This flag should be false on production ***                        | "false"                                  |
+| DEBUG                | Enable or disable debug mode.  *This flag should be false on production*                              | "false"                                  |
 | KEY_NAME             | The name of the key pair to use for the instance.                                                     | Replace "YOUR_KEY_NAME" with the actual key pair name. |
 | ROOT_VOLUME_SIZE     | The size of the root volume in GB.                                                                    | 8                                      |
 | SPOT_INASTANCE_ONLY  | If true, only create a spot instance.                                                                 | "true"                                   |

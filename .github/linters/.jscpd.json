@@ -1,0 +1,8 @@
+{
+    "languages": [
+        {
+            "path": "**/*.yml",
+            "ignore": true
+        }
+    ]
+}
