@@ -55,6 +55,9 @@ debug() {
     [ "$DEBUG" == "true" ] &&  echo "DEBUG: $*" 1>&2
 }
 
+echoerr() { 
+   echo "$*" 1>&2; 
+}
 # check if key name is set
 if [ -z "$KEY_NAME" ]; then
     debug "KEY_NAME is not set"
@@ -66,7 +69,7 @@ fi
 get_github_runner_token () {
     # fail if github token is not set
     if [ -z "$GITHUB_TOKEN" ]; then
-        debug "GITHUB_TOKEN is not set"
+        echoerr "GITHUB_TOKEN is not set"
         exit 1
     fi
 
@@ -82,7 +85,7 @@ get_github_runner_token () {
     debug "runner token: " "$RUNNER_TOKEN"
     # fail if then length of runner token is less than 5
     if [ ${#RUNNER_TOKEN} -lt 5 ]; then
-        debug "Failed to get runner token"
+        echoerr "Failed to get runner token"
         exit 1
     fi
 }
@@ -90,11 +93,11 @@ get_github_runner_token () {
 prep_aws_cred () {
     # fail if aws access key id is not set
     if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-        debug "AWS_ACCESS_KEY_ID is not set"
+        echoerr "AWS_ACCESS_KEY_ID is not set"
         exit 1
     fi
     if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-        debug "AWS_SECRET_ACCESS_KEY is not set"
+        echoerr "AWS_SECRET_ACCESS_KEY is not set"
         exit 1
     fi
     export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
@@ -105,7 +108,7 @@ prep_aws_cred () {
 prep_create() {
     # fail if security group id is not set
     if [ -z "$SECURITY_GROUP_ID" ]; then
-        debug "SECURITY_GROUP_ID is not set"
+        echoerr "SECURITY_GROUP_ID is not set"
         exit 1
     fi
     # set s3 bucket name if not set and create s3 bucket flag is set to true
@@ -236,7 +239,7 @@ create_runner () {
     # create on-demand instance instead
     if [ -z "$INSTANCE_ID" ]; then
         if [ "$SPOT_INSTANCE_ONLY" == "true" ]; then
-            debug "SPOT_INSTANCE_ONLY is set to true, exiting"
+            echoerr "SPOT_INSTANCE_ONLY is set to true, exiting"
             exit 1
         fi
         debug "Failed to create spot instance, creating on-demand instance instead"
@@ -247,7 +250,7 @@ create_runner () {
 
         # Check if instance creation failed
         if [ -z "$INSTANCE_ID" ]; then
-            debug "Failed to create on-demand instance"
+            echoerr "Failed to create on-demand instance"
             exit 1
         fi
     fi
@@ -257,7 +260,7 @@ create_runner () {
 
     # Check if wait command succeeded
     if [ $? -ne 0 ]; then
-        debug "Instance failed to become ready. Terminating instance."
+        echoerr "Instance failed to become ready. Terminating instance."
         terminate_instance
         exit 1
     fi
@@ -301,7 +304,7 @@ unregister_runner () {
 # If not set, use the command line arguments and run the matching function. This is for local testing.
 ACTION=${INPUT_ACTION:-$1}
 if [ -z "$ACTION" ]; then
-    debug "ACTION is not set"
+    echoerr "ACTION is not set"
     exit 1
 fi
 
@@ -314,7 +317,7 @@ case $ACTION in
         ;;
     terminate)
         if [ -z "${INSTANCE_ID}" ]; then
-            debug "Instance ID is not set"
+            echoerr "Instance ID is not set"
             exit 1
         fi
         prep_aws_cred
@@ -322,7 +325,7 @@ case $ACTION in
         ;;
     unregister)
         if [ -z "${RUNNER_NAME}" ]; then
-            debug "Runner name is not set"
+            echoerr "Runner name is not set"
             exit 1
         fi
         unregister_runner
@@ -331,7 +334,7 @@ case $ACTION in
         list_runner 
         ;;
     *)
-        debug "Invalid action:"${ACTION}
-        debug "Usage: $0 {create|terminate|unregister|list}"
+        echoerr "Invalid action:"${ACTION}
+        echoerr "Usage: $0 {create|terminate|unregister|list}"
         exit 1
 esac
