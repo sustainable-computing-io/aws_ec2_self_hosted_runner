@@ -87,6 +87,17 @@ get_github_runner_token () {
 }
 
 prep () {
+    # fail if aws access key id is not set
+    if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+        debug "AWS_ACCESS_KEY_ID is not set"
+        exit 1
+    fi
+    if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+        debug "AWS_SECRET_ACCESS_KEY is not set"
+        exit 1
+    fi
+    export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+    export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
     # fail if security group id is not set
     if [ -z "$SECURITY_GROUP_ID" ]; then
         debug "SECURITY_GROUP_ID is not set"
