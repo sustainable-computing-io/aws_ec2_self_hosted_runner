@@ -63,6 +63,8 @@ jobs:
             --env INPUT_INSTANCE_TYPE="t2.micro" \
             --env INPUT_CREATE_S3_BUCKET="false" \
             --env INPUT_SPOT_INSTANCE_ONLY="true" \
+            --env GITHUB_OUTPUT="$GITHUB_OUTPUT" \
+            -v "$GITHUB_OUTPUT":"$GITHUB_OUTPUT" \
             --rm ${{ env.TEST_TAG }} >> "$GITHUB_OUTPUT"
 
       - name: Print Output

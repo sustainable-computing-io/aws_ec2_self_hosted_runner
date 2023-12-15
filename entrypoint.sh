@@ -269,10 +269,10 @@ create_runner () {
     get_instance_ip
 
     # Output the instance ID to github output
-    echo "instance_id=$INSTANCE_ID"
-    echo "runner_name=$RUNNER_NAME"
-    echo "instance_ip=$INSTANCE_IP"
-    echo "bucket_name=$BUCKET_NAME"
+    echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+    echo "runner_name=$RUNNER_NAME" >> $GITHUB_OUTPUT
+    echo "instance_ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
+    echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
 }
 
 list_runner () {
