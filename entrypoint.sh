@@ -280,7 +280,7 @@ unregister_runner () {
 
 # Get ACTION from env var passed by workflow. 
 # If not set, use the command line arguments and run the matching function. This is for local testing.
-ACTION=${ACTION:-$1}
+ACTION=${INPUT_ACTION:-$1}
 if [ -z "$ACTION" ]; then
     debug "ACTION is not set"
     exit 1
