@@ -28,6 +28,12 @@ inputs:
   ami_id:
     description: 'The AMI ID to use for the EC2 instance'
     required: false
+  key_name:
+    description: 'The key name to use for the EC2 instance'
+    required: false
+  root_volume_size:
+    description: 'The root volume size to use for the EC2 instance'
+    required: false
   instance_type:
     description: 'The instance type to use for the EC2 instance'
     required: false
@@ -36,6 +42,15 @@ inputs:
     required: false
   spot_instance_only:
     description: 'Only use spot instances'
+    required: false
+  instance_id:
+    description: 'The instance id to use during terminate action'
+    required: false
+  runner_name:
+    description: 'The name of the self hosted runner during unregister action'
+    required: false
+  bucket_name:
+    description: 'The name of the S3 bucket (if created) to use during terminate action'
     required: false
 
 # Define your outputs here.
