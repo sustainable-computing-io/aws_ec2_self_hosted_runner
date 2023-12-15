@@ -81,23 +81,23 @@ jobs:
           BUCKET_NAME: ${{ needs.setup-runner.outputs.bucket_name }}
 ```
 
-## Inputs and Secrets
+## Inputs
 
 | Parameter            | Description                                                                                           | Default Value                            |
 |----------------------|-------------------------------------------------------------------------------------------------------|------------------------------------------|
-| SECURITY_GROUP_ID    | (Required) The ID of the AWS security group to associate with the instance.                                      |  Should be set in secrets. |
-| GITHUB_TOKEN         | (Required) The GitHub token to authenticate with the GitHub API. Must have repository admin permission.          | Should be set in secrets, e.g. GH_SELF_HOSTED_RUNNER_TOKEN |
-| AWS_ACCESS_KEY_ID    | (Required) The AWS access key ID to use for authentication.                                                      | Should be set in secrets. |
-| AWS_SECRET_ACCESS_KEY| (Required) The AWS secret access key to use for authentication.                                                  | Should be set in secrets. |
-| AMI_ID               | (Optional) The ID of the Amazon Machine Image (AMI) to use for the instance.                                     | "ami-0e4d0bb9670ea8db0" (Ubuntu Server 20.04 LTS) |
-| INSTANCE_TYPE        | (Optional) The type of the instance to launch.                                                                   | "t2.micro"                               |
-| GITHUB_REPO          | (Optional) The GitHub repository in the format "owner/repository" to clone and use.                              | "sustainable-computing-io/kepler-model-server" |
-| AWS_REGION           | (Optional) The AWS region to launch the spot instance.                                                           | "us-east-2"                              |
-| KEY_NAME             | (Optional) The name of the key pair to use for the instance.                                                     | Replace "YOUR_KEY_NAME" with the actual key pair name. |
-| ROOT_VOLUME_SIZE     | (Optional) The size of the root volume in GB.                                                                    | 8                                      |
-| SPOT_INASTANCE_ONLY  | (Optional) If true, only create a spot instance.                                                                 | "true"                                   |
-| CREATE_S3_BUCKET     | (Optional) If true, create a S3 bucket to store the model.                                                       | "false"                                  |
-| BUCKET_NAME          | (Optional) The name of the S3 bucket to store the model.                                                         | The bucket name is the same as the repository name with time date stamp. |
+| github_token         | (Required) The GitHub token to authenticate with the GitHub API. Must have repository admin permission.          | Should be set in secrets, e.g. GH_SELF_HOSTED_RUNNER_TOKEN |
+| aws_access_key_id    | (Required) The AWS access key ID to use for authentication.                                                      | Should be set in secrets. |
+| aws_secret_access_key| (Required) The AWS secret access key to use for authentication.                                                  | Should be set in secrets. |
+| security_group_id    | (Required) The ID of the AWS security group to associate with the instance.                                      | Should be set in secrets. |
+| ami_id               | (Optional) The ID of the Amazon Machine Image (AMI) to use for the instance.                                     | "ami-0e4d0bb9670ea8db0" (Ubuntu Server 20.04 LTS) |
+| instance_type        | (Optional) The type of the instance to launch.                                                                   | "t2.micro"                               |
+| github_repo          | (Optional) The GitHub repository in the format "owner/repository" to clone and use.                              | "sustainable-computing-io/kepler-model-server" |
+| aws_region           | (Optional) The AWS region to launch the spot instance.                                                           | "us-east-2"                              |
+| key_name             | (Optional) The name of the key pair to use for the instance.                                                     | Replace "YOUR_KEY_NAME" with the actual key pair name. |
+| root_volume_size     | (Optional) The size of the root volume in GB.                                                                    | 8                                      |
+| spot_inastance_only  | (Optional) If true, only create a spot instance.                                                                 | "true"                                   |
+| create_s3_bucket     | (Optional) If true, create a S3 bucket to store the model.                                                       | "false"                                  |
+| bucket_name          | (Optional) The name of the S3 bucket to store the model.                                                         | The bucket name is the same as the repository name with time date stamp. |
 
 ## Outputs
 

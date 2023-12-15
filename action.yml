@@ -22,6 +22,9 @@ inputs:
   aws_region:
     description: 'The AWS region to use'
     required: false
+  github_repo:
+    description: 'The GitHub repo to use'
+    required: false
   ami_id:
     description: 'The AMI ID to use for the EC2 instance'
     required: false
