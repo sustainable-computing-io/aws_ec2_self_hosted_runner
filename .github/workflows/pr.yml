@@ -65,7 +65,7 @@ jobs:
             --env INPUT_SPOT_INSTANCE_ONLY="true" \
             --env GITHUB_OUTPUT="$GITHUB_OUTPUT" \
             -v "$GITHUB_OUTPUT":"$GITHUB_OUTPUT" \
-            --rm ${{ env.TEST_TAG }} >> "$GITHUB_OUTPUT"
+            --rm ${{ env.TEST_TAG }}
 
       - name: Print Output
         id: output
