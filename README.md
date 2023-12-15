@@ -8,77 +8,89 @@
 Here's an example of how to use this action in a workflow file:
 
 ```yaml
-name: Example Workflow
+name: Test Self-hosted Runner
 
 on:
-  workflow_dispatch:
-    inputs:
-      ami_id:
-        description: 'AWS Machine Image ID'
-        required: false
-        default: 'ami-0e4d0bb9670ea8db0'
-      instance_type:
-        description: 'AWS EC2 Instance Type'
-        required: false
-        default: 't2.micro'
-      need_s3_bucket:
-        description: 'Need S3 bucket?'
-        required: false
-        default: 'false'
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
 jobs:
   setup-runner:
-    name: setup self hosted runner
+    name: Test-Setup Self Hosted Runner
     runs-on: ubuntu-latest
+    outputs:
+      instance_id: ${{ steps.create-runner.outputs.instance_id }}
+      runner_name: ${{ steps.create-runner.outputs.runner_name }}
+
     steps:
-      - name: setup runner
-        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@main
-        env:
-          ACTION: "create"
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          SECURITY_GROUP_ID: ${{ secrets.AWS_SECURITY_GROUP_ID }}
-          GITHUB_REPO: ${{ github.repository }}
-          AMI_ID: ${{ github.event.inputs.ami_id }}
-          INSTANCE_TYPE: ${{ github.event.inputs.instance_type }
-          CREATE_S3_BUCKET: ${{ github.event.inputs.need_s3_bucket }}
-  
-  run-tests:
+      - name: Create Runner
+        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@v1
+        id: create-runner
+        with:
+            action: "create"
+            aws_region: ${{ secrets.AWS_REGION }}
+            github_token: ${{ secrets.GH_SELF_HOSTED_RUNNER_TOKEN }}
+            aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            security_group_id: ${{ secrets.AWS_SECURITY_GROUP_ID }}
+            github_repo: ${{ github.repository }}
+            ami_id: "ami-0e4d0bb9670ea8db0"
+            instance_type: "t2.micro"
+            create_s3_bucket: "false"
+            spot_instance_only: "true"
+
+      - name: Print Output
+        id: output
+        run: |
+          echo "instance_id ${{ steps.create-runner.outputs.instance_id }}"
+          echo "instance_ip ${{ steps.create-runner.outputs.instance_ip }}"
+          echo "runner_name ${{ steps.create-runner.outputs.runner_name }}"
+    
+  test-runner:
     needs: setup-runner
-    name: run tests
+    name: GitHub Self Hosted Runner Tests
     runs-on: [self-hosted, linux, x64]
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
 
-    - name: Run Tests
-      run: |
-        export INSTANCE_ID=${{ needs.setup-runner.outputs.instance_id }}
-        echo "Running tests on self-hosted runner with instance $INSTANCE_ID"
-        uname -a # or any other command
-
+      - name: Run Tests
+        run: |
+          export INSTANCE_ID="${{ needs.setup-runner.outputs.instance_id }}"
+          echo "Running tests on self-hosted runner with instance ${INSTANCE_ID}"
+          uname -a # or any other command
+          cat /etc/os-release 
+          cat /proc/cpuinfo 
+  
   destroy-runner:
     if: always()
-    needs: [setup-runner, run-tests]
+    needs: [setup-runner, test-runner]
+    name: Destroy Self Hosted Runner
     runs-on: ubuntu-latest
     steps:
-    - name: Unregister runner
-        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@main
-        env:
-          ACTION: "unregister"
-          RUNNER_NAME: ${{ needs.setup-runner.outputs.runner_name }}
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-          GITHUB_REPO: ${{ github.repository }}
-    - name: Terminate instance
-        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@main
-        env:
-          ACTION: "terminate"        
-          INSTANCE_ID: ${{ needs.setup-runner.outputs.instance_id }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          BUCKET_NAME: ${{ needs.setup-runner.outputs.bucket_name }}
+      - name: unregister runner
+        id: unregister
+        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@v1
+        with:
+          action: "unregister"
+          runner_name: ${{ needs.setup-runner.outputs.runner_name }}
+          github_token: ${{ secrets.GH_SELF_HOSTED_RUNNER_TOKEN }}
+          github_repo: ${{ github.repository }}
+
+      - name: terminate instance
+        id: terminate
+        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@v1
+        with:
+          action: "terminate"
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          instance_id: ${{ needs.setup-runner.outputs.instance_id }}
 ```
 
 ## Inputs
@@ -93,7 +105,7 @@ jobs:
 | instance_type        | (Optional) The type of the instance to launch.                                                                   | "t2.micro"                               |
 | github_repo          | (Optional) The GitHub repository in the format "owner/repository" to clone and use.                              | "sustainable-computing-io/kepler-model-server" |
 | aws_region           | (Optional) The AWS region to launch the spot instance.                                                           | "us-east-2"                              |
-| key_name             | (Optional) The name of the key pair to use for the instance.                                                     | Replace "YOUR_KEY_NAME" with the actual key pair name. |
+| key_name             | (Optional) The name of the key pair to use for the instance.                                                     | Empty. |
 | root_volume_size     | (Optional) The size of the root volume in GB.                                                                    | 8                                      |
 | spot_inastance_only  | (Optional) If true, only create a spot instance.                                                                 | "true"                                   |
 | create_s3_bucket     | (Optional) If true, create a S3 bucket to store the model.                                                       | "false"                                  |
