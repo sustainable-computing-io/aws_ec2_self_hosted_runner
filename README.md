@@ -86,7 +86,7 @@ jobs:
 | Parameter            | Description                                                                                           | Default Value                            |
 |----------------------|-------------------------------------------------------------------------------------------------------|------------------------------------------|
 | SECURITY_GROUP_ID    | (Required) The ID of the AWS security group to associate with the instance.                                      |  Should be set in secrets. |
-| GITHUB_TOKEN         | (Required) The GitHub token to authenticate with the GitHub API. Must have repository admin permission.          | Should be set in secrets. |
+| GITHUB_TOKEN         | (Required) The GitHub token to authenticate with the GitHub API. Must have repository admin permission.          | Should be set in secrets, e.g. GH_SELF_HOSTED_RUNNER_TOKEN |
 | AWS_ACCESS_KEY_ID    | (Required) The AWS access key ID to use for authentication.                                                      | Should be set in secrets. |
 | AWS_SECRET_ACCESS_KEY| (Required) The AWS secret access key to use for authentication.                                                  | Should be set in secrets. |
 | AMI_ID               | (Optional) The ID of the Amazon Machine Image (AMI) to use for the instance.                                     | "ami-0e4d0bb9670ea8db0" (Ubuntu Server 20.04 LTS) |
