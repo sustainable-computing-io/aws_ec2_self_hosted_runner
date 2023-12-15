@@ -27,6 +27,8 @@
 set -o pipefail
 
 # Define instance parameters
+AWS_ACCESS_KEY_ID="${INPUT_AWS_ACCESS_KEY_ID:-}"
+AWS_SECRET_ACCESS_KEY="${INPUT_AWS_SECRET_ACCESS_KEY:-}"
 AMI_ID="${INPUT_AMI_ID:-ami-0e4d0bb9670ea8db0}" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type, x86_64
 INSTANCE_TYPE="${INPUT_INSTANCE_TYPE:-t2.micro}" # c6i.metal: c is for compute, 6 is 6th geneneration, i is for Intel, metal is for bare metal
 SECURITY_GROUP_ID="${INPUT_SECURITY_GROUP_ID:-}"
