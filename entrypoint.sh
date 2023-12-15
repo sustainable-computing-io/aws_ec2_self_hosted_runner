@@ -32,6 +32,7 @@ AWS_SECRET_ACCESS_KEY="${INPUT_AWS_SECRET_ACCESS_KEY:-}"
 AMI_ID="${INPUT_AMI_ID:-ami-0e4d0bb9670ea8db0}" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type, x86_64
 INSTANCE_TYPE="${INPUT_INSTANCE_TYPE:-t2.micro}" # c6i.metal: c is for compute, 6 is 6th geneneration, i is for Intel, metal is for bare metal
 SECURITY_GROUP_ID="${INPUT_SECURITY_GROUP_ID:-}"
+RUNNER_NAME="${INPUT_RUNNER_NAME:-}" # Name of the runner to create
 GITHUB_TOKEN="${INPUT_GITHUB_TOKEN:-}"
 GITHUB_REPO="${INPUT_GITHUB_REPO:-"sustainable-computing-io/kepler-model-server"}"
 REGION="${INPUT_AWS_REGION:-us-east-2}"          # Region to launch the spot instance
@@ -86,7 +87,7 @@ get_github_runner_token () {
     fi
 }
 
-prep () {
+prep_aws_cred () {
     # fail if aws access key id is not set
     if [ -z "$AWS_ACCESS_KEY_ID" ]; then
         debug "AWS_ACCESS_KEY_ID is not set"
@@ -98,22 +99,27 @@ prep () {
     fi
     export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
     export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+
+}
+
+prep_create() {
     # fail if security group id is not set
     if [ -z "$SECURITY_GROUP_ID" ]; then
         debug "SECURITY_GROUP_ID is not set"
         exit 1
-    fi
-
-    # github runner name
-    if [ -z "$RUNNER_NAME" ]; then
-        RUNNER_NAME="self-hosted-runner-"$(date +"%Y%m%d%H%M%S")
     fi
     # set s3 bucket name if not set and create s3 bucket flag is set to true
     if [ -z "$BUCKET_NAME" ] && [ "$CREATE_S3_BUCKET" == "true" ]; then
         BUCKET_NAME=$REPO_NAME"-"$INSTANCE_TYPE"-"$(date +"%Y%m%d%H%M%S")
     fi
 
+    prep_aws_cred
     get_github_runner_token
+
+    # github runner name
+    if [ -z "$RUNNER_NAME" ]; then
+        RUNNER_NAME="self-hosted-runner-"$(date +"%Y%m%d%H%M%S")
+    fi
 }
 
 # create the user data script
@@ -303,7 +309,7 @@ case $ACTION in
     create)
         INSTANCE_ID=""
         RUNNER_NAME=""
-        prep
+        prep_create
         create_runner
         ;;
     terminate)
@@ -311,6 +317,7 @@ case $ACTION in
             debug "Instance ID is not set"
             exit 1
         fi
+        prep_aws_cred
         terminate_instance
         ;;
     unregister)
