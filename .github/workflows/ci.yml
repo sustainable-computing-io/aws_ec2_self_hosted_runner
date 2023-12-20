@@ -49,6 +49,9 @@ jobs:
   setup-runner:
     name: GitHub Actions Test create instance
     runs-on: ubuntu-latest
+    outputs:
+      instance_id: ${{ steps.create-runner.outputs.instance_id }}
+      runner_name: ${{ steps.create-runner.outputs.runner_name }}
     steps:
       - name: Checkout
         id: checkout
