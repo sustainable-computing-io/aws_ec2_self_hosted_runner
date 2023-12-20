@@ -1,0 +1,31 @@
+name: imagebuild
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  image_build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4.1.1
+    - name: Login to Quay
+      uses: docker/login-action@v3
+      with:
+        registry: quay.io/sustainable_computing_io
+        username: ${{ secrets.username }}
+        password: ${{ secrets.password }}
+    - name: Build and push the container
+      uses: docker/build-push-action@v5
+      with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: quay.io/sustainable_computing_io/aws_ec2_self_hosted_runner:latest
+          labels: latest
+          file: Dockerfile
