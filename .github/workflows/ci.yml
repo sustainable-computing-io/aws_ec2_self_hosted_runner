@@ -10,16 +10,6 @@ on:
 permissions:
   contents: read
 
-env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  SECURITY_GROUP_ID: ${{ secrets.AWS_SECURITY_GROUP_ID }}
-  GITHUB_REPO: ${{ github.repository }}
-  AMI_ID: ${{ github.event.inputs.ami_id }}
-  INSTANCE_TYPE: ${{ github.event.inputs.instance_type }}
-
 jobs:
   test-docker:
     name: Docker Tests
