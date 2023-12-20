@@ -8,22 +8,22 @@
 set -o pipefail
 
 # Define instance parameters
-AWS_ACCESS_KEY_ID="${INPUT_AWS_ACCESS_KEY_ID:-}"
-AWS_SECRET_ACCESS_KEY="${INPUT_AWS_SECRET_ACCESS_KEY:-}"
-AMI_ID="${INPUT_AMI_ID:-ami-0e4d0bb9670ea8db0}" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type, x86_64
-INSTANCE_TYPE="${INPUT_INSTANCE_TYPE:-t2.micro}" # c6i.metal: c is for compute, 6 is 6th geneneration, i is for Intel, metal is for bare metal
-SECURITY_GROUP_ID="${INPUT_SECURITY_GROUP_ID:-}"
-RUNNER_NAME="${INPUT_RUNNER_NAME:-}" # Name of the runner to create
-GITHUB_TOKEN="${INPUT_GITHUB_TOKEN:-}"
-GITHUB_REPO="${INPUT_GITHUB_REPO:-"sustainable-computing-io/kepler-model-server"}"
-REGION="${INPUT_AWS_REGION:-us-east-2}"          # Region to launch the spot instance
+AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-}"
+AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-}"
+AMI_ID="${AMI_ID:-ami-0e4d0bb9670ea8db0}" # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type, x86_64
+INSTANCE_TYPE="${INSTANCE_TYPE:-t2.micro}" # c6i.metal: c is for compute, 6 is 6th geneneration, i is for Intel, metal is for bare metal
+SECURITY_GROUP_ID="${SECURITY_GROUP_ID:-}"
+RUNNER_NAME="${RUNNER_NAME:-}" # Name of the runner to create
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+GITHUB_REPO="${GITHUB_REPO:-"sustainable-computing-io/kepler-model-server"}"
+REGION="${AWS_REGION:-us-east-2}"          # Region to launch the spot instance
 DEBUG="${DEBUG:-false}"                # Enable debug mode
-KEY_NAME="${INPUT_KEY_NAME:-}"  # Name of the key pair to use for the instance
-ROOT_VOLUME_SIZE="${INPUT_ROOT_VOLUME_SIZE:-8}" # Size of the root volume in GB
-SPOT_INSTANCE_ONLY="${INPUT_SPOT_INSTANCE_ONLY:-true}" # If true, only create spot instance
-CREATE_S3_BUCKET="${INPUT_CREATE_S3_BUCKET:-false}" # Wehther to create a S3 bucket to store the model
-BUCKET_NAME="${INPUT_BUCKET_NAME:-}"         # Name of the S3 bucket
-INSTANCE_ID="${INPUT_INSTANCE_ID:-}"         # ID of the created instance
+KEY_NAME="${KEY_NAME:-}"  # Name of the key pair to use for the instance
+ROOT_VOLUME_SIZE="${ROOT_VOLUME_SIZE:-8}" # Size of the root volume in GB
+SPOT_INSTANCE_ONLY="${SPOT_INSTANCE_ONLY:-true}" # If true, only create spot instance
+CREATE_S3_BUCKET="${CREATE_S3_BUCKET:-false}" # Wehther to create a S3 bucket to store the model
+BUCKET_NAME="${BUCKET_NAME:-}"         # Name of the S3 bucket
+INSTANCE_ID="${INSTANCE_ID:-}"         # ID of the created instance
 KEY_NAME_OPT=""                        # Option to pass to the AWS CLI to specify the key pair
 [ "$DEBUG" == "true" ] && set -x
 
@@ -283,7 +283,7 @@ unregister_runner () {
 
 # Get ACTION from env var passed by workflow. 
 # If not set, use the command line arguments and run the matching function. This is for local testing.
-ACTION=${INPUT_ACTION:-$1}
+ACTION=${ACTION:-$1}
 if [ -z "$ACTION" ]; then
     echoerr "ACTION is not set"
     exit 1
