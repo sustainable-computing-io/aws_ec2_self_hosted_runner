@@ -9,16 +9,16 @@ inputs:
     required: true
   github_token:
     description: 'The GitHub token to use'
-    required: true
+    required: false
   aws_access_key_id:
     description: 'The AWS access key id to use'
-    required: true
+    required: false
   aws_secret_access_key:
     description: 'The AWS secret access key to use'
-    required: true
+    required: false
   security_group_id:
     description: 'The AWS security group id to use'
-    required: true
+    required: false
   aws_region:
     description: 'The AWS region to use'
     required: false
@@ -55,8 +55,10 @@ inputs:
 
 # Define your outputs here.
 outputs:
-  instane_id:
+  instance_id:
     description: The AWS EC2 instance id
+  instance_ip:
+    description: The AWS EC2 instance ip
   runner_name:
     description: The name of the self hosted runner
   bucket_name:
