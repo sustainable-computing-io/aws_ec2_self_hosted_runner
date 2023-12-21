@@ -49,6 +49,7 @@ jobs:
           echo "instance_id ${{ steps.create-runner.outputs.instance_id }}"
           echo "instance_ip ${{ steps.create-runner.outputs.instance_ip }}"
           echo "runner_name ${{ steps.create-runner.outputs.runner_name }}"
+          echo "bucket_name ${{ steps.create-runner.outputs.bucket_name }}"
     
   test-runner:
     needs: setup-runner
