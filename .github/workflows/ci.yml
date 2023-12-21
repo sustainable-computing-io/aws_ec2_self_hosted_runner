@@ -102,6 +102,10 @@ jobs:
     needs: [setup-runner, test-runner]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+        
       - name: unregister runner
         id: unregister
         uses: ./
