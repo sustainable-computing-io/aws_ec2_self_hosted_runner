@@ -1,7 +1,7 @@
 # AWS Self Hosted Runner GitHub Action
 
 [![GitHub Super-Linter](https://github.com/sustainable-computing-io/aws_ec2_self_hosted_runner/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
-![CI](https://github.com/sustainable-computing-io/aws_ec2_self_hosted_runner/actions/workflows/pr.yml/badge.svg)
+![CI](https://github.com/sustainable-computing-io/aws_ec2_self_hosted_runner/actions/workflows/CI.yml/badge.svg)
 
 ## Usage
 
