@@ -107,7 +107,7 @@ jobs:
 | github_repo          | (Optional) The GitHub repository in the format "owner/repository" to clone and use.                              | "sustainable-computing-io/kepler-model-server" |
 | aws_region           | (Optional) The AWS region to launch the spot instance.                                                           | "us-east-2"                              |
 | key_name             | (Optional) The name of the key pair to use for the instance.                                                     | Empty. |
-| root_volume_size     | (Optional) The size of the root volume in GB.                                                                    | 8                                      |
+| root_volume_size     | (Optional) The size of the root volume in GB.                                                                    | 20                                       |
 | spot_inastance_only  | (Optional) If true, only create a spot instance.                                                                 | "true"                                   |
 | create_s3_bucket     | (Optional) If true, create a S3 bucket to store the model.                                                       | "false"                                  |
 | bucket_name          | (Optional) The name of the S3 bucket to store the model.                                                         | The bucket name is the same as the repository name with time date stamp. |
