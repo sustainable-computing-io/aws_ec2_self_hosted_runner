@@ -19,7 +19,7 @@ GITHUB_REPO="${INPUT_GITHUB_REPO:-"sustainable-computing-io/kepler-model-server"
 REGION="${INPUT_AWS_REGION:-us-east-2}"          # Region to launch the spot instance
 DEBUG="${DEBUG:-false}"                # Enable debug mode
 KEY_NAME="${INPUT_KEY_NAME:-}"  # Name of the key pair to use for the instance
-ROOT_VOLUME_SIZE="${INPUT_ROOT_VOLUME_SIZE:-8}" # Size of the root volume in GB
+ROOT_VOLUME_SIZE="${INPUT_ROOT_VOLUME_SIZE:-20}" # Size of the root volume in GB
 SPOT_INSTANCE_ONLY="${INPUT_SPOT_INSTANCE_ONLY:-true}" # If true, only create spot instance
 CREATE_S3_BUCKET="${INPUT_CREATE_S3_BUCKET:-false}" # Wehther to create a S3 bucket to store the model
 BUCKET_NAME="${INPUT_BUCKET_NAME:-}"         # Name of the S3 bucket
@@ -113,8 +113,12 @@ create_uesr_data () {
     # ENCODED_USER_DATA=$(echo "$USER_DATA" | base64 | tr -d \\n)
     cat <<EOF > user_data.sh
 #!/bin/bash
-apt-get update
-apt-get install -y curl jq
+if command -v yum &> /dev/null; then
+    yum install -y curl jq libicu
+else
+    apt-get update
+    apt-get install -y curl jq
+fi
 # install the latest kernel modeules and enable rapl. it doesn seem uname -r works in user data script...
 # export KERNEL_VERSION=$(apt list --installed 2>&1 | grep 'linux-image-' | awk -F'/' '{print $1}' |grep "\." | cut -d'-' -f3-) 
 # echo "installing kernel modules for version $KERNEL_VERSION"
@@ -149,7 +153,7 @@ run_spot_instance () {
     --instance-market-options '{"MarketType":"spot", "SpotOptions": {"MaxPrice": "'${BID_PRICE}'" }}' \
     --block-device-mappings '[{"DeviceName": "/dev/sda1","Ebs": { "VolumeSize": '${ROOT_VOLUME_SIZE}', "DeleteOnTermination": true } }]'\
     $KEY_NAME_OPT \
-    --user-data file://user_data.sh)
+    --user-data file://user_data.sh 2>&1)
 }
 
 run_on_demand_instance() {
@@ -208,7 +212,18 @@ create_runner () {
         # Check if instance creation failed
         if [ -z "$INSTANCE_ID" ]; then
             debug "Failed to create instance with bid price ${BID_PRICE}"
-            BID_PRICE=$(echo "$BID_PRICE * 1.1" | bc)
+            # if bid price is too low, and the error message contains"An error occurred (SpotMaxPriceTooLow) when calling the RunInstances operation: Your Spot request price of 0.0035200000000000023 is lower than the minimum required Spot request fulfillment price of 0.06319999999999999."
+            # then we extract the minimum required price and use that as the new bid price
+            if [[ "$INSTANCE_JSON" == *"SpotMaxPriceTooLow"* ]]; then
+                debug "SpotMaxPriceTooLow error, extracting minimum required price"
+                MIN_PRICE=$(echo -n "$INSTANCE_JSON" | awk '{print $NF}' | head -c -2)
+                debug "Minimum required price: ${MIN_PRICE}"
+                #BID_PRICE=$(echo "$MIN_PRICE * 1.1" | bc)
+                BID_PRICE=$MIN_PRICE
+                continue
+            else
+                BID_PRICE=$(echo "$BID_PRICE * 1.1" | bc)
+            fi
             debug "Creating a spot instance with a new bid of ${BID_PRICE}"
             continue
         else
