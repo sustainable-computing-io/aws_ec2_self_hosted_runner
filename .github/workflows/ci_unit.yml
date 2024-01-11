@@ -1,0 +1,134 @@
+# shellcheck disable=SC1000-SC9999
+name: Continuous Integration
+
+on:
+  workflow_call:
+    secrets:
+      AWS_REGION:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AMI_ID:
+        required: true
+      GH_SELF_HOSTED_RUNNER_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-docker:
+    name: Docker Tests
+    runs-on: ubuntu-latest
+
+    # Run a local registry to push to
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5001:5000
+
+    env:
+      TEST_TAG: localhost:5001/sustainable_computing_io/aws_ec2_self_hosted_runner:latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker BuildX
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          driver-opts: network=host
+
+      - name: Build the Container
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.TEST_TAG }}
+
+
+  setup-runner:
+    name: GitHub Actions Test create instance
+    runs-on: ubuntu-latest
+    outputs:
+      instance_id: ${{ steps.create-runner.outputs.instance_id }}
+      runner_name: ${{ steps.create-runner.outputs.runner_name }}
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Test Local Action
+        id: create-runner
+        uses: ./
+        with:
+            action: "create"
+            aws_region: ${{ secrets.AWS_REGION }}
+            github_token: ${{ secrets.GH_SELF_HOSTED_RUNNER_TOKEN }}
+            aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            security_group_id: ${{ secrets.AWS_SECURITY_GROUP_ID }}
+            github_repo: ${{ github.repository }}
+            ami_id: ${{ secrets.AMI_ID }}
+            instance_type: "t2.micro"
+            create_s3_bucket: "false"
+            spot_instance_only: "true"
+
+      - name: Print Output
+        id: output
+        run: |
+          echo "instance_id ${{ steps.create-runner.outputs.instance_id }}"
+          echo "instance_ip ${{ steps.create-runner.outputs.instance_ip }}"
+          echo "runner_name ${{ steps.create-runner.outputs.runner_name }}"
+          echo "bucket_name ${{ steps.create-runner.outputs.bucket_name }}"
+
+  test-runner:
+    needs: setup-runner
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Tests
+        run: |
+          export INSTANCE_ID="${{ needs.setup-runner.outputs.instance_id }}"
+          echo "Running tests on self-hosted runner with instance ${INSTANCE_ID}"
+          uname -a # or any other command
+          cat /etc/os-release 
+          cat /proc/cpuinfo 
+
+  destroy-runner:
+    if: always()
+    name: GitHub Actions Test destroy instance
+    needs: [setup-runner, test-runner]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+        
+      - name: unregister runner
+        id: unregister
+        uses: ./
+        with:
+          action: "unregister"
+          runner_name: ${{ needs.setup-runner.outputs.runner_name }}
+          github_token: ${{ secrets.GH_SELF_HOSTED_RUNNER_TOKEN }}
+          github_repo: ${{ github.repository }}
+
+      - name: terminate instance
+        id: terminate
+        uses: ./
+        with:
+          action: "terminate"
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          instance_id: ${{ needs.setup-runner.outputs.instance_id }}
+            
