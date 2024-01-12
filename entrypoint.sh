@@ -113,9 +113,14 @@ create_uesr_data () {
     # ENCODED_USER_DATA=$(echo "$USER_DATA" | base64 | tr -d \\n)
     cat <<EOF > user_data.sh
 #!/bin/bash
+export RUNNER_LABEL="${INSTANCE_TYPE}"
 if command -v yum &> /dev/null; then
+    # add rhel to the label
+    export RUNNER_LABEL="rhel,${INSTANCE_TYPE}"
     yum install -y curl jq libicu
 else
+    # add ubuntu to the label
+    export RUNNER_LABEL="ubuntu,${INSTANCE_TYPE}"
     apt-get update
     apt-get install -y curl jq
 fi
@@ -135,7 +140,7 @@ tar xzf ./actions-runner-linux-x64-2.311.0.tar.gz
 # Create the runner and start the configuration experience
 # there is a bug in the github instruction. The config script does not work with sudo unless we set RUNNER_ALLOW_RUNASROOT=true
 export RUNNER_ALLOW_RUNASROOT=true
-./config.sh --replace --unattended --name ${RUNNER_NAME} --url "https://github.com/${GITHUB_REPO}" --token ${RUNNER_TOKEN}
+./config.sh --replace --unattended --name ${RUNNER_NAME} --url "https://github.com/${GITHUB_REPO}" --token ${RUNNER_TOKEN} --labels "\${RUNNER_LABEL}"
 # Last step, run it!
 ./run.sh
 EOF
@@ -216,9 +221,9 @@ create_runner () {
             # then we extract the minimum required price and use that as the new bid price
             if [[ "$INSTANCE_JSON" == *"SpotMaxPriceTooLow"* ]]; then
                 debug "SpotMaxPriceTooLow error, extracting minimum required price"
-                MIN_PRICE=$(echo -n "$INSTANCE_JSON" | awk '{print $NF}' | head -c -2)
+                MIN_PRICE=$(echo -n "$INSTANCE_JSON" | awk '{print $NF}' | head -c -2 | tr -d '\r')
                 debug "Minimum required price: ${MIN_PRICE}"
-                #BID_PRICE=$(echo "$MIN_PRICE * 1.1" | bc)
+                BID_PRICE=$(echo "$MIN_PRICE * 1.01" | bc)
                 BID_PRICE=$MIN_PRICE
                 continue
             else
