@@ -47,13 +47,33 @@ jobs:
 
   unitpreOS:
     strategy:
+      fail-fast: false
       matrix:
       # us-east-2
       # Ubuntu 20.04 AMI is ami-0e4d0bb9670ea8db0
       # ubuntu 22.04 AMI is ami-05fb0b8c1424f266b 
       # RHEL 9       AMI is ami-078cbc4c2d057c244
-        AMI_ID: [ami-0e4d0bb9670ea8db0,ami-05fb0b8c1424f266b,ami-078cbc4c2d057c244]
+        AMI_ID: [ami-0e4d0bb9670ea8db0,ami-078cbc4c2d057c244]
     uses: ./.github/workflows/ci_unit.yml
+    secrets:
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        GH_SELF_HOSTED_RUNNER_TOKEN: ${{ secrets.GH_SELF_HOSTED_RUNNER_TOKEN }}
+        AWS_SECURITY_GROUP_ID: ${{ secrets.AWS_SECURITY_GROUP_ID }}
+        AMI_ID:  ${{matrix.AMI_ID}}
+
+  integration:
+    needs: [unitpreOS]
+    strategy:
+      fail-fast: false
+      matrix:
+      # us-east-2
+      # Ubuntu 20.04 AMI is ami-0e4d0bb9670ea8db0
+      # ubuntu 22.04 AMI is ami-05fb0b8c1424f266b 
+      # RHEL 9       AMI is ami-078cbc4c2d057c244
+        AMI_ID: [ami-05fb0b8c1424f266b]
+    uses: ./.github/workflows/ci_integration.yml
     secrets:
         AWS_REGION: ${{ secrets.AWS_REGION }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
