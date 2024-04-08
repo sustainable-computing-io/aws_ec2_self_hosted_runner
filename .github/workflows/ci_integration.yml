@@ -63,36 +63,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Docker
-        id: docker
-        run: |
-            # Add Docker's official GPG key:
-            apt-get update -y
-            apt-get install ca-certificates curl gnupg -y
-            install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-            chmod a+r /etc/apt/keyrings/docker.gpg
-            # Add the repository to Apt sources:
-            echo \
-              "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-              $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-              tee /etc/apt/sources.list.d/docker.list > /dev/null
-            apt-get update -y
-            apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
-            docker info
-
-      - name: install make and tooling for libbpf
-        id: dependency
-        run: |
-            apt-get install -y binutils-dev build-essential 
-            apt-get install -y pkg-config
-            env
-
       - name: use Kepler action to deploy cluster
         uses: sustainable-computing-io/kepler-action@main
         with:
           ebpfprovider: libbpf
           cluster_provider: kind
+          install_containerruntime: true
           prometheus_enable: true
           tekton_enable: true
 
@@ -103,8 +79,11 @@ jobs:
           uname -a # or any other command
           cat /etc/os-release 
           cat /proc/cpuinfo
-          kind get kubeconfig --name=kind > /tmp/kubeconfig
-          kubectl get po --all-namespaces --kubeconfig=/tmp/kubeconfig
+          echo "verify k8s info"
+          export KUBECONFIG="/tmp/kubeconfig"
+          kubectl cluster-info
+          kubectl get po --all-namespaces
+          echo "end of test"
 
   destroy-runner:
     if: always()
