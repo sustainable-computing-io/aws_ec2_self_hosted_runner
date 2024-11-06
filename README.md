@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Create Runner
-        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@v1
+        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@main
         id: create-runner
         with:
             action: "create"
@@ -77,7 +77,7 @@ jobs:
     steps:
       - name: unregister runner
         id: unregister
-        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@v1
+        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@main
         with:
           action: "unregister"
           runner_name: ${{ needs.setup-runner.outputs.runner_name }}
@@ -86,7 +86,7 @@ jobs:
 
       - name: terminate instance
         id: terminate
-        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@v1
+        uses: sustainable-computing-io/aws_ec2_self_hosted_runner@main
         with:
           action: "terminate"
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
