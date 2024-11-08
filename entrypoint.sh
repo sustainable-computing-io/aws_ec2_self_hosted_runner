@@ -146,16 +146,10 @@ export RUNNER_ALLOW_RUNASROOT=true
 EOF
 }
 
-get_bid_price () {
-    BID_PRICE=$(aws ec2 describe-spot-price-history --instance-types "$INSTANCE_TYPE" \
-        --product-descriptions "Linux/UNIX" --region "${REGION}" \
-        --query 'SpotPriceHistory[0].SpotPrice' --output text)
-}
-
 run_spot_instance () {
     INSTANCE_JSON=$(aws ec2 run-instances --image-id $AMI_ID --count 1 --instance-type $INSTANCE_TYPE \
     --security-group-ids $SECURITY_GROUP_ID --region ${REGION}  --region ${REGION} \
-    --instance-market-options '{"MarketType":"spot", "SpotOptions": {"MaxPrice": "'${BID_PRICE}'" }}' \
+    --instance-market-options 'MarketType=spot' \
     --block-device-mappings '[{"DeviceName": "/dev/sda1","Ebs": { "VolumeSize": '${ROOT_VOLUME_SIZE}', "DeleteOnTermination": true } }]'\
     $KEY_NAME_OPT \
     --user-data file://user_data.sh 2>&1)
@@ -201,13 +195,7 @@ create_runner () {
     # GitHub Runner setup script
     create_uesr_data
 
-    # we use spot instance, the bid price is determined by the spot price history, simply use the last price for now
-    # Fetching spot price history
-    debug "Fetching spot price history..."
-    get_bid_price
-    # Creating a spot instance request
-    debug "Creating a spot instance with an initial bid of ${BID_PRICE}"
-    # try 3 times, each time increase the bid price by 10%
+    # try 3 times
     for i in {1..3}
     do
         run_spot_instance
@@ -216,20 +204,7 @@ create_runner () {
 
         # Check if instance creation failed
         if [ -z "$INSTANCE_ID" ]; then
-            debug "Failed to create instance with bid price ${BID_PRICE}"
-            # if bid price is too low, and the error message contains"An error occurred (SpotMaxPriceTooLow) when calling the RunInstances operation: Your Spot request price of 0.0035200000000000023 is lower than the minimum required Spot request fulfillment price of 0.06319999999999999."
-            # then we extract the minimum required price and use that as the new bid price
-            if [[ "$INSTANCE_JSON" == *"SpotMaxPriceTooLow"* ]]; then
-                debug "SpotMaxPriceTooLow error, extracting minimum required price"
-                MIN_PRICE=$(echo -n "$INSTANCE_JSON" | awk '{print $NF}' | head -c -2 | tr -d '\r')
-                debug "Minimum required price: ${MIN_PRICE}"
-                BID_PRICE=$(echo "$MIN_PRICE * 1.01" | bc)
-                BID_PRICE=$MIN_PRICE
-                continue
-            else
-                BID_PRICE=$(echo "$BID_PRICE * 1.1" | bc)
-            fi
-            debug "Creating a spot instance with a new bid of ${BID_PRICE}"
+            debug "Failed to create instance, retrying"
             continue
         else
             break
