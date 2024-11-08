@@ -25,6 +25,7 @@ CREATE_S3_BUCKET="${INPUT_CREATE_S3_BUCKET:-false}" # Wehther to create a S3 buc
 BUCKET_NAME="${INPUT_BUCKET_NAME:-}"         # Name of the S3 bucket
 INSTANCE_ID="${INPUT_INSTANCE_ID:-}"         # ID of the created instance
 KEY_NAME_OPT=""                        # Option to pass to the AWS CLI to specify the key pair
+AUTO_TERMINATE_HOURS="${INPUT_AUTO_TERMINATE_HOURS:-6}" # Number of hours after which to terminate the instance (0 means no auto-termination)
 [ "$DEBUG" == "true" ] && set -x
 
 # get the organization name from the github repo
@@ -106,6 +107,81 @@ prep_create() {
     fi
 }
 
+schedule_termination() {
+    local instance_id=$1
+    local hours=$2
+    
+    if [ "$hours" -gt 0 ]; then
+        # Calculate termination time in UTC
+        local termination_time
+        termination_time=$(date -u -d "+${hours} hours" +"%Y-%m-%dT%H:%M:%SZ")
+        
+        # Create an AWS CloudWatch event rule to terminate the instance
+        local rule_name="terminate-${instance_id}"
+        
+        # Create CloudWatch event rule
+        aws events put-rule \
+            --name "$rule_name" \
+            --schedule-expression "at(${termination_time})" \
+            --state ENABLED \
+            --region "${REGION}"
+            
+        # Create IAM role for CloudWatch to terminate EC2 instances if it doesn't exist
+        local role_name="AutoTerminateEC2Role"
+        if ! aws iam get-role --role-name "$role_name" 2>/dev/null; then
+            aws iam create-role \
+                --role-name "$role_name" \
+                --assume-role-policy-document '{
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "events.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }]
+                }'
+                
+            # Attach policy to allow terminating EC2 instances
+            aws iam put-role-policy \
+                --role-name "$role_name" \
+                --policy-name "TerminateEC2Policy" \
+                --policy-document '{
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                        "Effect": "Allow",
+                        "Action": "ec2:TerminateInstances",
+                        "Resource": "*"
+                    }]
+                }'
+        fi
+        
+        # Create target for the rule
+        aws events put-targets \
+            --rule "$rule_name" \
+            --targets "[{
+                \"Id\": \"TerminateInstance\",
+                \"Arn\": \"arn:aws:events:${REGION}:${AWS_ACCOUNT_ID}:rule/${rule_name}\",
+                \"RoleArn\": \"arn:aws:iam::${AWS_ACCOUNT_ID}:role/${role_name}\",
+                \"Input\": \"{\\\"instance_ids\\\": [\\\"${instance_id}\\\"]}\",
+                \"RunCommandParameters\": {
+                    \"RunCommand\": [
+                        \"aws\",
+                        \"ec2\",
+                        \"terminate-instances\",
+                        \"--instance-ids\",
+                        \"${instance_id}\",
+                        \"--region\",
+                        \"${REGION}\"
+                    ]
+                }
+            }]"
+            
+        debug "Instance $instance_id scheduled for termination at $termination_time UTC"
+    fi
+}
+
+
 # create the user data script
 create_uesr_data () {
     # Encode user data so it can be passed as an argument to the AWS CLI
@@ -179,6 +255,35 @@ delete_s3_bucket () {
 }
 
 terminate_instance () {
+    local rule_name="terminate-${instance_id}"
+    local role_name="AutoTerminateEC2Role"
+
+    # Remove CloudWatch Event Rule and Targets if they exist
+    if aws events list-rules --name-prefix "$rule_name" --region "${REGION}" 2>/dev/null | grep -q "$rule_name"; then
+        debug "Removing CloudWatch Event targets for rule $rule_name"
+        aws events remove-targets --rule "$rule_name" --ids "TerminateInstance" --region "${REGION}"
+        
+        debug "Deleting CloudWatch Event rule $rule_name"
+        aws events delete-rule --name "$rule_name" --region "${REGION}"
+    fi
+
+    # Check if the IAM role is being used by other rules before deleting
+    if aws iam get-role --role-name "$role_name" 2>/dev/null; then
+        # List all rules to check if the role is still in use
+        local rules_using_role
+        rules_using_role=$(aws events list-rules --region "${REGION}" --query 'Rules[?RoleArn!=`null`]' --output text)
+        
+        if [ -z "$rules_using_role" ]; then
+            debug "Removing IAM role policy"
+            aws iam delete-role-policy --role-name "$role_name" --policy-name "TerminateEC2Policy"
+            
+            debug "Deleting IAM role $role_name"
+            aws iam delete-role --role-name "$role_name"
+        else
+            debug "IAM role $role_name is still in use by other rules, skipping deletion"
+        fi
+    fi
+
     # Terminate instance   
     aws ec2 terminate-instances --instance-ids "$INSTANCE_ID" --region "${REGION}" 
     # Delete S3 bucket
@@ -230,6 +335,12 @@ create_runner () {
             exit 1
         fi
     fi
+
+    # Schedule auto-termination if enabled
+    if [ "$AUTO_TERMINATE_HOURS" -gt 0 ]; then
+        schedule_termination "$INSTANCE_ID" "$AUTO_TERMINATE_HOURS"
+    fi
+
     rm user_data.sh
     # Wait for instance to become ready
     aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID" --region "${REGION}" 
@@ -249,6 +360,9 @@ create_runner () {
     echo "runner_name=$RUNNER_NAME" >> $GITHUB_OUTPUT
     echo "instance_ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
     echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+    if [ "$AUTO_TERMINATE_HOURS" -gt 0 ]; then
+        echo "termination_time=$(date -u -d "+${AUTO_TERMINATE_HOURS} hours" +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+    fi
 }
 
 list_runner () {

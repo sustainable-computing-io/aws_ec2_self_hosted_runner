@@ -52,6 +52,9 @@ inputs:
   bucket_name:
     description: 'The name of the S3 bucket (if created) to use during terminate action'
     required: false
+  auto_terminate_hours:
+    description: 'The number of hours to wait before terminating the instance'
+    required: false
 
 # Define your outputs here.
 outputs:
@@ -63,6 +66,8 @@ outputs:
     description: The name of the self hosted runner
   bucket_name:
     description: The name of the S3 bucket (if created)
+  termination_time:
+    description: The time the instance will be automatically terminated (if enabled)
 
 runs:
   using: docker

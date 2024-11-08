@@ -111,6 +111,7 @@ jobs:
 | spot_inastance_only  | (Optional) If true, only create a spot instance.                                                                 | "true"                                   |
 | create_s3_bucket     | (Optional) If true, create a S3 bucket to store the model.                                                       | "false"                                  |
 | bucket_name          | (Optional) The name of the S3 bucket to store the model.                                                         | The bucket name is the same as the repository name with time date stamp. |
+| auto_terminate_hours | (Optional) The number of hours after which the instance should be terminated.                                   | 6                                        |
 
 ## Outputs
 
@@ -120,3 +121,4 @@ jobs:
 | `runner_name` | GitHub self hosted runner name |
 | `instance_ip` | AWS EC2 instance IP |
 | `bucket_name` | AWS S3 bucket name |
+| `termination_time` | The time when the instance was terminated |
