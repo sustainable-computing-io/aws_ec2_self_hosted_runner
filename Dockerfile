@@ -1,5 +1,5 @@
 # Set the base image to use for subsequent instructions
-FROM alpine:3.19
+FROM alpine:3.21.0
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache aws-cli bash curl jq
